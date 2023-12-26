@@ -1,18 +1,42 @@
 import * as AI from "ai-jsx";
-import { ChatCompletion, UserMessage } from "ai-jsx/core/completion";
+import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama } from './ollama.tsx'
+import { Ollama, OllamaImage } from './ollama.tsx'
+import { Inline } from "ai-jsx/core/inline";
 
-function App() {
+function ImageDescriptor () {
   return (
-    <Ollama stream={false}>
+    <Ollama model="llava">
+      {/* The llava model deosn't support "ChatCompletion" */}
+      <Completion>
+        Look at this image <OllamaImage url={'./plage.png'}/>.
+        How hot do you think is the water ?
+      </Completion>
+    </Ollama>
+  )
+}
+
+function Chat () {
+  return (
+    <Ollama>
+      {/* default model is llama2 */}
       <ChatCompletion>
         <UserMessage>
-          Generate a Shakespearean sonnet about large language models.
+          Write a little haiku about life 
         </UserMessage>
       </ChatCompletion>
     </Ollama>
-  );
+  )
+}
+
+function App() {
+  return (
+    <>
+      <ImageDescriptor />
+      {"\n\n"}
+      <Chat />
+    </>
+  )
 }
 const renderContext = AI.createRenderContext();
 const response = await renderContext.render(<App />);

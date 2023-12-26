@@ -1,11 +1,11 @@
 import { ChatProvider, CompletionProvider, ModelPropsWithChildren } from 'ai-jsx/core/completion';
-import { AssistantMessage, renderToConversation } from 'ai-jsx/core/conversation';
+import { AssistantMessage, UserMessage as AIUserMessage, renderToConversation, SystemMessage, UserMessage } from 'ai-jsx/core/conversation';
 import { AIJSXError, ErrorCode } from 'ai-jsx/core/errors';
 import * as AI from 'ai-jsx';
 import { debugRepresentation } from 'ai-jsx/core/debug';
 import fetch from 'node-fetch';
 import _ from 'lodash';
-import { Logger } from 'ai-jsx/core/log';
+import { promises as fs } from 'fs'
 
 /**
  * Base 64 encoded image
@@ -326,12 +326,40 @@ export async function* OllamaCompletionModel(
   { render, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
-  const prompt = await render(props.children);
+
+  async function buildPrompt (children: AI.Node) {
+    if (_.isArray(children)) {
+      const { textNodes, imageNodes } = children.reduce((nodes, child) => {
+        // @ts-ignore
+        if (child && child.tag && child.tag.name === 'OllamaImage') {
+          return {
+            textNodes: [...nodes.textNodes, `[img-${nodes.imageNodes.length}]`],
+            imageNodes: [...nodes.imageNodes, child]
+          }
+        }
+        return {
+          textNodes: [...nodes.textNodes, child],
+          imageNodes: nodes.imageNodes
+        }
+      }, {textNodes: [] as AI.Node[], imageNodes: [] as AI.Node[]})
+  
+      return {
+        prompt: await render(textNodes),
+        images: await Promise.all(imageNodes.map((node) => render(node)))
+      };
+    }
+    return { prompt: await render(children) }
+  }
+  
+  const prompt = await buildPrompt(props.children)
+
   const llama2Args: OllamaApiCompletionArgs = {
     ...mapModelPropsToArgs(props),
-    prompt,
+    ...prompt,
   };
+
   logger.debug({ llama2Args }, 'Calling Ollama');
+
   const response = await doOllamaRequest(
     llama2Args,
     logger
@@ -412,4 +440,8 @@ export function Ollama({ children, ...defaults }: OllamaModelProps) {
       </CompletionProvider>
     </ChatProvider>
   );
+}
+
+export async function OllamaImage ({ url }: {url: string}) {
+  return await fs.readFile(url, {encoding: 'base64'});
 }
