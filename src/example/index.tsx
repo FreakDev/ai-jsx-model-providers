@@ -1,8 +1,7 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, OllamaImage } from './ollama.tsx'
-import { Inline } from "ai-jsx/core/inline";
+import { Ollama, OllamaImage } from '../ollama.js'
 
 function ImageDescriptor () {
   return (
@@ -10,7 +9,7 @@ function ImageDescriptor () {
       {/* The llava model deosn't support "ChatCompletion" */}
       <Completion>
         Look at this image <OllamaImage url={'./plage.png'}/>.
-        How hot do you think is the water ?
+        How hot do you think the water is ?
       </Completion>
     </Ollama>
   )

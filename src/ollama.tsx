@@ -1,5 +1,5 @@
 import { ChatProvider, CompletionProvider, ModelPropsWithChildren } from 'ai-jsx/core/completion';
-import { AssistantMessage, UserMessage as AIUserMessage, renderToConversation, SystemMessage, UserMessage } from 'ai-jsx/core/conversation';
+import { AssistantMessage, renderToConversation } from 'ai-jsx/core/conversation';
 import { AIJSXError, ErrorCode } from 'ai-jsx/core/errors';
 import * as AI from 'ai-jsx';
 import { debugRepresentation } from 'ai-jsx/core/debug';
@@ -327,9 +327,8 @@ export async function* OllamaCompletionModel(
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
-  async function buildPrompt (children: AI.Node) {
-    if (_.isArray(children)) {
-      const { textNodes, imageNodes } = children.reduce((nodes, child) => {
+  async function buildPromptFromNodes (children: AI.Node[]) {
+      const { textNodes, imageNodes } = children?.reduce((nodes, child) => {
         // @ts-ignore
         if (child && child.tag && child.tag.name === 'OllamaImage') {
           return {
@@ -347,11 +346,14 @@ export async function* OllamaCompletionModel(
         prompt: await render(textNodes),
         images: await Promise.all(imageNodes.map((node) => render(node)))
       };
-    }
-    return { prompt: await render(children) }
   }
   
-  const prompt = await buildPrompt(props.children)
+  let prompt = {prompt: ''}
+  if (_.isArray(props.children)) {
+    prompt = await buildPromptFromNodes(props.children as AI.Node[])
+  } else {
+    prompt = { prompt: await render(props.children) }
+  }
 
   const llama2Args: OllamaApiCompletionArgs = {
     ...mapModelPropsToArgs(props),
