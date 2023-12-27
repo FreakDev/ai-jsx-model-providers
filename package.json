@@ -1,14 +1,12 @@
 {
-  "name": "ollama-ai-jsx",
+  "name": "ai-jsx-ollama",
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc",
-    "build": "tsc --build",
-    "clean": "tsc --build --clean",
-    "start": "npm run typecheck && tsx index.tsx"
+    "build": "tsc",
+    "start": "tsx index.tsx"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
