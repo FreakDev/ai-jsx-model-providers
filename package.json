@@ -1,6 +1,6 @@
 {
   "name": "ai-jsx-ollama",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/FreakDev/ai-jsx-ollama"
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "ai-jsx": "^0.28.2",
+    "axios": "^1.6.5",
     "lodash": "^4.17.21",
     "node-fetch": "^3.3.2"
   }

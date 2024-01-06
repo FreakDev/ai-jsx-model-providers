@@ -3,9 +3,8 @@ import { AssistantMessage, renderToConversation } from 'ai-jsx/core/conversation
 import { AIJSXError, ErrorCode } from 'ai-jsx/core/errors';
 import * as AI from 'ai-jsx';
 import { debugRepresentation } from 'ai-jsx/core/debug';
-import fetch from 'node-fetch';
 import _ from 'lodash';
-import { promises as fs } from 'fs'
+import { streamAsyncIterator } from './utils/srteamToAsyncIterator.js';
 
 /**
  * Base 64 encoded image
@@ -155,7 +154,7 @@ const mapModelPropsToArgs = (props: OllamaModelProps): Omit<OllamaApiArgs, 'prom
   }
 }
 
-const OLLAMA_API_BASE = process.env.OLLAMA_API_BASE ?? 'http://127.0.0.1:11434/api'
+const AI_JSX_OLLAMA_API_BASE = process.env.AI_JSX_OLLAMA_API_BASE ?? 'http://127.0.0.1:11434/api'
 
 /**
  * Run a model model on Ollama.
@@ -168,7 +167,7 @@ async function doOllamaRequest<ModelArgs extends OllamaApiArgs>(
 
   const controller = new AbortController();
   try {
-    const apiEndpoint = `${OLLAMA_API_BASE}${isOllamaApiChatArgs(input) ? '/chat' : '/generate'}`
+    const apiEndpoint = `${AI_JSX_OLLAMA_API_BASE}${isOllamaApiChatArgs(input) ? '/chat' : '/generate'}`
 
     const response = await fetch(apiEndpoint, { 
       method: 'post', 
@@ -180,7 +179,7 @@ async function doOllamaRequest<ModelArgs extends OllamaApiArgs>(
       throw await response.text()
     }
 
-    return response.body;
+    return streamAsyncIterator(response.body);
 
   } catch (ex) {
     controller.abort()
@@ -263,7 +262,8 @@ export async function* OllamaChatModel(
         if (next.done) {
           return null;
         }
-        nextValue = typeof next.value === 'string' ? next.value : JSON.parse(next.value.toString('utf-8'))
+
+        nextValue = typeof next.value === 'string' ? next.value : JSON.parse(new TextDecoder().decode(next.value))
       } while (!nextValue.message.content);
     
       logger.trace({ message: next.value }, 'Got message');
@@ -379,7 +379,7 @@ export async function* OllamaCompletionModel(
         if (next.done) {
           return null;
         }
-        nextValue = typeof next.value === 'string' ? next.value : JSON.parse(next.value.toString('utf-8'))
+        nextValue = typeof next.value === 'string' ? next.value : JSON.parse(new TextDecoder().decode(next.value))
       } while (!nextValue.response);
     
       logger.trace({ message: next.value }, 'Got message');
@@ -442,8 +442,4 @@ export function Ollama({ children, ...defaults }: OllamaModelProps) {
       </CompletionProvider>
     </ChatProvider>
   );
-}
-
-export async function OllamaImage ({ url }: {url: string}) {
-  return await fs.readFile(url, {encoding: 'base64'});
 }

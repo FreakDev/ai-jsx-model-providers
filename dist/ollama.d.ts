@@ -56,7 +56,4 @@ export declare function OllamaCompletionModel(props: OllamaModelProps, { render,
  *  * No support for functions
  */
 export declare function Ollama({ children, ...defaults }: OllamaModelProps): import("ai-jsx/jsx-runtime").JSX.Element;
-export declare function OllamaImage({ url }: {
-    url: string;
-}): Promise<string>;
 export {};

@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "ai-jsx/jsx-runtime";
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage } from "ai-jsx/core/completion";
-import { Ollama, OllamaImage } from '../ollama.js';
+import { Ollama, OllamaImage } from '../index.js';
 function ImageDescriptor() {
     return (_jsx(Ollama, { model: "llava", children: _jsxs(Completion, { children: ["Look at this image ", _jsx(OllamaImage, { url: './plage.png' }), ". How hot do you think the water is ?"] }) }));
 }

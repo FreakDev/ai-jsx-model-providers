@@ -1,7 +1,7 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, OllamaImage } from '../ollama.js'
+import { Ollama, OllamaImage } from '../index.js'
 
 function ImageDescriptor () {
   return (
