@@ -15,6 +15,8 @@ This little library is my contribution to that great idea : i wanted to use it w
 
 Prerequisites : You need to have a Ollama server ready to use (with at least one model already pulled) and running (see https://github.com/jmorganca/ollama/blob/main/docs/README.md)
 
+to customize the endpoint of your ollama server set the `AI_JSX_OLLAMA_API_BASE` environment variable to something like `http://your-server-domain:11434/api` (no tailling slash). If the variable doesn't exists the default value will be `http://127.0.0.1:11434/api`
+
 #### Hello world
 
 As you would have done for other model provider already existing in AI-JSX library (see https://docs.ai-jsx.com/guides/models), just wrap your conponent into the `<Ollama>` component
@@ -55,5 +57,7 @@ function ImageToText () {
 
 console.log( await AI.createRenderContext().render(<ImageToText />) );
 ```
+
+By using the OllamaImage component, the image will be automatically encoded to a base64 string (as required by the Llava model). Note that in this example the image is a local file but you can also use remote images with an absolute url : http://domain/path/file.jpg.
 
 Note : the `<OllamaImage />` component will only work with the llava model (if used with another model the base64 encoded image will be added as is to the prompt, which will probably make the LLM ouput weird things)
