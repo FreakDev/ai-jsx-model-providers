@@ -1,2 +1,2 @@
-export { Ollama, OllamaChatModel, OllamaCompletionModel } from "./ollama.js";
-export { OllamaImage } from "./ollama-image.js" 
+export * from "./ollama.js";
+export { LlavaImage } from "./llava-image.js" 

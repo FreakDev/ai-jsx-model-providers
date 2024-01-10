@@ -1,6 +1,6 @@
-# ai-jsx-ollama
+# ai-jsx-model-providers
 
-[AI-JSX](https://docs.ai-jsx.com/) component to work with [Ollama.ai](https://ollama.ai/)
+[AI-JSX](https://docs.ai-jsx.com/) components to work with more model providers like [Ollama.ai](https://ollama.ai/) or [Llamafile](https://github.com/Mozilla-Ocho/llamafile)
 
 
 ### Foreword
@@ -48,7 +48,7 @@ function ImageToText () {
     <Ollama model="llava">
       {/* The llava model does not support "chat completion" */}
       <Completion>
-        Look at this image <OllamaImage url={'./plage.png'}/>.
+        Look at this image <LlavaImage url={'./plage.png'}/>.
         How hot do you think the water is ?
       </Completion>
     </Ollama>
@@ -58,6 +58,6 @@ function ImageToText () {
 console.log( await AI.createRenderContext().render(<ImageToText />) );
 ```
 
-By using the OllamaImage component, the image will be automatically encoded to a base64 string (as required by the Llava model). Note that in this example the image is a local file but you can also use remote images with an absolute url : http://domain/path/file.jpg.
+By using the LlavaImage component, the image will be automatically encoded to a base64 string (as required by the Llava model). Note that in this example the image is a local file but you can also use remote images with an absolute url : http://domain/path/file.jpg.
 
-Note : the `<OllamaImage />` component will only work with the llava model (if used with another model the base64 encoded image will be added as is to the prompt, which will probably make the LLM ouput weird things)
+Note : the `<LlavaImage />` component will only work with the llava model (if used with another model the base64 encoded image will be added as is to the prompt, which will probably make the LLM ouput weird things)

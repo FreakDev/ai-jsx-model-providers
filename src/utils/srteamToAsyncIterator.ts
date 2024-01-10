@@ -1,6 +1,6 @@
 import { ReadableStream } from "stream/web";
 
-export function streamAsyncIterator(stream: ReadableStream) {
+export function streamToAsyncIterator(stream: ReadableStream) {
   // Get a lock on the stream:
   const reader = stream.getReader();
 

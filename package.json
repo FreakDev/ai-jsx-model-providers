@@ -1,16 +1,15 @@
 {
-  "name": "ai-jsx-ollama",
+  "name": "ai-jsx-model-providers",
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FreakDev/ai-jsx-ollama"
+    "url": "https://github.com/FreakDev/ai-jsx-model-providers"
   },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "start": "tsx index.tsx"
+    "build": "tsc"
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
@@ -21,8 +20,6 @@
   },
   "dependencies": {
     "ai-jsx": "^0.28.2",
-    "axios": "^1.6.5",
-    "lodash": "^4.17.21",
-    "node-fetch": "^3.3.2"
+    "lodash": "^4.17.21"
   }
 }

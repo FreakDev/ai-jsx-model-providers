@@ -5,7 +5,7 @@ interface Props {
   useFetch?: boolean
 }
 
-export async function OllamaImage ({ url, useFetch = false }: Props) {
+export async function LlavaImage ({ url, useFetch = false }: Props) {
   if (!useFetch && !url.startsWith('http')) {
     const fs = await import("fs/promises");
 

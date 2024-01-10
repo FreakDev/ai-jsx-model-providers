@@ -1,14 +1,14 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, OllamaImage } from '../index.js'
+import { Ollama, LlavaImage } from '../index.js'
 
 function ImageDescriptor () {
   return (
     <Ollama model="llava">
       {/* The llava model deosn't support "ChatCompletion" */}
       <Completion>
-        Look at this image <OllamaImage url={'./plage.png'}/>.
+        Look at this image <LlavaImage url={'./plage.png'}/>.
         How hot do you think the water is ?
       </Completion>
     </Ollama>
@@ -33,7 +33,7 @@ function App() {
     <>
       <ImageDescriptor />
       {"\n\n"}
-      <Chat />
+      {/* <Chat /> */}
     </>
   )
 }
