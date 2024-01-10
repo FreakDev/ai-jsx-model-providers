@@ -149,7 +149,7 @@ type QureryLlmFunction = (
 ) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
 
 export type StreamedChunk = ArrayBuffer | string
-export type ChunkDecoder = (chunk: StreamedChunk, responseType: LlmQueryType) => string
+export type ChunkDecoder = (chunk: StreamedChunk, responseType: LlmQueryType) => string;
 
 const QueryLlmContext = AI.createContext<{
   queryLlm: QureryLlmFunction,
@@ -361,7 +361,6 @@ export async function* ModelProviderCompletionModel(
       LLM_QUERY_TYPE.COMPLETION,
       iterator,
       chunkDecoder,
-      // (chunk) => typeof chunk.value === 'string' ? chunk.value : JSON.parse(new TextDecoder().decode(chunk.value)).response,
       logger
     )
 

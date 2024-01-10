@@ -1,9 +1,9 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, LlavaImage } from '../index.js'
+import { Ollama, LlavaImage, Llamafile } from '../index.js'
 
-function ImageDescriptor () {
+function Multimodal () {
   return (
     <Ollama model="llava">
       {/* The llava model deosn't support "ChatCompletion" */}
@@ -17,23 +17,22 @@ function ImageDescriptor () {
 
 function Chat () {
   return (
-    <Ollama>
-      {/* default model is llama2 */}
+    <Llamafile>
       <ChatCompletion>
         <UserMessage>
           Write a little haiku about life 
         </UserMessage>
       </ChatCompletion>
-    </Ollama>
+    </Llamafile>
   )
 }
 
 function App() {
   return (
     <>
-      <ImageDescriptor />
+      <Multimodal />
       {"\n\n"}
-      {/* <Chat /> */}
+      <Chat />
     </>
   )
 }
