@@ -1,40 +1,15 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase } from "../model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm } from "../model-provider.js";
 import * as AI from 'ai-jsx';
-import { streamToAsyncIterator } from "../utils/srteamToAsyncIterator.js";
 import _ from "lodash";
 
 const AI_JSX_LLAMAFILE_API_BASE = process.env.AI_JSX_LLAMAFILE_API_BASE ?? 'http://127.0.0.1:8080'
 
-/**
- * Run a model model on Ollama.
- */
 export async function queryLlamafile(
   queryType: LlmQueryType,
-  input: ModelProviderApiArgs,
+  input: any,
   logger: AI.ComponentContext['logger']
 ) {
-  logger.debug({ model: input.model, input }, 'Calling model');
-
-  const controller = new AbortController();
-  try {
-    const apiEndpoint = `${AI_JSX_LLAMAFILE_API_BASE}${queryType === LLM_QUERY_TYPE.CHAT ? '/v1/chat/completions' : '/completion'}`
-
-    const response = await fetch(apiEndpoint, { 
-      method: 'post', 
-      signal: controller.signal,
-      body: JSON.stringify({...input, stream: true})
-    })
-
-    if (!response.ok || !response.body) {
-      throw await response.text()
-    }
-
-    return streamToAsyncIterator(response.body);
-
-  } catch (ex) {
-    controller.abort()
-    console.error(`${ex}`)
-  }
+  return doQueryLlm(`${AI_JSX_LLAMAFILE_API_BASE}${queryType === LLM_QUERY_TYPE.CHAT ? '/v1/chat/completions' : '/completion'}`, input, logger)
 }
 
 export const llamafileChunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryType) => { 

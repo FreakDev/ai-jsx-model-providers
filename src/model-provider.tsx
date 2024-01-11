@@ -138,9 +138,44 @@ const mapModelPropsToArgs = (props: ModelProviderPropsBase): Omit<ModelProviderA
 
 export type QureryLlmFunction = (
   queryType: LlmQueryType,
-  input: ModelProviderApiArgs,
+  input: any,
   logger: AI.ComponentContext['logger']
 ) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
+
+type doQureryLlmFunction = (
+  url: string,
+  input: any,
+  logger: AI.ComponentContext['logger']
+) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
+
+export const doQueryLlm: doQureryLlmFunction = async (
+  url: string,
+  input: any,
+  logger: AI.ComponentContext['logger']
+) => {
+  logger.debug(input, 'Calling model');
+
+  const controller = new AbortController();
+  try {
+    const apiEndpoint = url
+
+    const response = await fetch(apiEndpoint, { 
+      method: 'post', 
+      signal: controller.signal,
+      body: JSON.stringify(input)
+    })
+
+    if (!response.ok || !response.body) {
+      throw await response.text()
+    }
+
+    return streamToAsyncIterator(response.body);
+
+  } catch (ex) {
+    controller.abort()
+    console.error(`${ex}`)
+  }
+}
 
 export type StreamedChunk = ArrayBuffer | string
 export type ChunkDecoder = (chunk: StreamedChunk, responseType: LlmQueryType) => string;
