@@ -72,7 +72,7 @@ export type ModelProviderApiArgs = ModelProviderApiChatArgs | ModelProviderApiCo
 export const isModelProviderApiChatArgs = (args: ModelProviderApiArgs): args is ModelProviderApiChatArgs => Object.prototype.hasOwnProperty.call(args, 'messages')
 export const isModelProviderApiCompletionArgs = (args: ModelProviderApiArgs): args is ModelProviderApiCompletionArgs => Object.prototype.hasOwnProperty.call(args, 'prompt')
 
-export type ModalProviderPropsBase = ModelPropsWithChildren 
+export type ModelProviderPropsBase = ModelPropsWithChildren 
                         & Omit<ModelProviderOptions, 
                                 'mirostat_eta' | 
                                 'mirostat_tau' | 
@@ -117,7 +117,7 @@ export const LLM_QUERY_TYPE = {
 
 export type LlmQueryType = typeof LLM_QUERY_TYPE[keyof typeof LLM_QUERY_TYPE]
 
-const mapModelPropsToArgs = (props: ModalProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
+const mapModelPropsToArgs = (props: ModelProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
   return {
     model: props.model,
     stream: props.stream,
@@ -181,7 +181,7 @@ const getResponseStreamConsumer = (
 }
 
 export async function* ModelProviderChatModel(
-  props: ModalProviderPropsBase,
+  props: ModelProviderPropsBase,
   { render, logger, memo, getContext }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
@@ -306,7 +306,7 @@ export async function* ModelProviderChatModel(
  * @hidden
  */
 export async function* ModelProviderCompletionModel(
-  props: ModalProviderPropsBase,
+  props: ModelProviderPropsBase,
   { render, logger, memo, getContext }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
@@ -403,11 +403,11 @@ export async function* ModelProviderCompletionModel(
   return AI.AppendOnlyStream;
 }
 
-interface ModelProviderProps extends ModalProviderPropsBase {
+export interface ModelProviderProps extends ModelProviderPropsBase {
   queryLlm: QureryLlmFunction,
   chunkDecoder: ChunkDecoder,
-  chatModel?: ModelComponent<ModalProviderPropsBase>, 
-  completionModel?: ModelComponent<ModalProviderPropsBase>
+  chatModel?: ModelComponent<ModelProviderPropsBase>, 
+  completionModel?: ModelComponent<ModelProviderPropsBase>
 }
 
 /**

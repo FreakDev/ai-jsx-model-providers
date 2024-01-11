@@ -1,4 +1,4 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModalProviderPropsBase, ModelProvider, ModelProviderApiArgs, StreamedChunk } from "../model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase } from "../model-provider.js";
 import * as AI from 'ai-jsx';
 import { streamToAsyncIterator } from "../utils/srteamToAsyncIterator.js";
 import _ from "lodash";
@@ -8,7 +8,7 @@ const AI_JSX_LLAMAFILE_API_BASE = process.env.AI_JSX_LLAMAFILE_API_BASE ?? 'http
 /**
  * Run a model model on Ollama.
  */
-export async function doQueryLlm(
+export async function queryLlamafile(
   queryType: LlmQueryType,
   input: ModelProviderApiArgs,
   logger: AI.ComponentContext['logger']
@@ -37,7 +37,7 @@ export async function doQueryLlm(
   }
 }
 
-export const chunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryType) => { 
+export const llamafileChunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryType) => { 
   if (typeof streamedChunk === 'string') {
     return streamedChunk;
   } else {
@@ -63,16 +63,26 @@ export const chunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryTy
   }
 }
 
-type LLamafileProps = Omit<ModalProviderPropsBase, 'model'>
+type LlamafileProps = Omit<ModelProviderPropsBase, 'model'> & {
+  queryLlm?: ModelProviderProps['queryLlm'],
+  chunkDecoder?: ModelProviderProps['chunkDecoder']
+}
 
 export const Llamafile = (
   { 
     children, 
+    queryLlm,
+    chunkDecoder,
     ...defaults 
-  }: LLamafileProps
+  }: LlamafileProps
 ) => {
   return (
-  <ModelProvider queryLlm={doQueryLlm} chunkDecoder={chunkDecoder} model="" {...defaults}>
+  <ModelProvider 
+    queryLlm={queryLlm ?? queryLlamafile} 
+    chunkDecoder={chunkDecoder ?? llamafileChunkDecoder} 
+    model="" 
+    {...defaults}
+  >
     {children}
   </ModelProvider>
   );
