@@ -104,12 +104,6 @@ export type ModelProviderPropsBase = ModelPropsWithChildren
                           stream?:boolean;
                         }
 
-interface OllamaResponseMessageChunkBase {
-  model:string;
-  created_at:string;
-  done:boolean;
-}
-
 export const LLM_QUERY_TYPE = {
   CHAT: 'chat',
   COMPLETION: 'completion'
@@ -142,7 +136,7 @@ const mapModelPropsToArgs = (props: ModelProviderPropsBase): Omit<ModelProviderA
   }
 }
 
-type QureryLlmFunction = (
+export type QureryLlmFunction = (
   queryType: LlmQueryType,
   input: ModelProviderApiArgs,
   logger: AI.ComponentContext['logger']
@@ -300,11 +294,6 @@ export async function* ModelProviderChatModel(
   return AI.AppendOnlyStream;
 }
 
-/**
- * Don't use this directly. Instead, wrap your `<Completion>` element in `<Ollama>`.
- *
- * @hidden
- */
 export async function* ModelProviderCompletionModel(
   props: ModelProviderPropsBase,
   { render, logger, memo, getContext }: AI.ComponentContext
@@ -410,14 +399,6 @@ export interface ModelProviderProps extends ModelProviderPropsBase {
   completionModel?: ModelComponent<ModelProviderPropsBase>
 }
 
-/**
- * This component causes all children `ChatCompletion` and `Completion` components to use Ollama.
- *
- * You must set env var OLLAMA_API_BASE.
- *
- * Drawbacks to Llama2:
- *  * No support for functions
- */
 export function ModelProvider(
   { 
     children, 
