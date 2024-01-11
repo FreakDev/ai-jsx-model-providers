@@ -145,13 +145,15 @@ export type QureryLlmFunction = (
 type doQureryLlmFunction = (
   url: string,
   input: any,
-  logger: AI.ComponentContext['logger']
+  logger: AI.ComponentContext['logger'],
+  extraHeaders?: Record<string, string>
 ) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
 
 export const doQueryLlm: doQureryLlmFunction = async (
-  url: string,
-  input: any,
-  logger: AI.ComponentContext['logger']
+  url,
+  input,
+  logger,
+  headers = {}
 ) => {
   logger.debug(input, 'Calling model');
 
@@ -161,6 +163,7 @@ export const doQueryLlm: doQureryLlmFunction = async (
 
     const response = await fetch(apiEndpoint, { 
       method: 'post', 
+      headers,
       signal: controller.signal,
       body: JSON.stringify(input)
     })
