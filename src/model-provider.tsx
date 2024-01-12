@@ -111,7 +111,9 @@ export const LLM_QUERY_TYPE = {
 
 export type LlmQueryType = typeof LLM_QUERY_TYPE[keyof typeof LLM_QUERY_TYPE]
 
-const mapModelPropsToArgs = (props: ModelProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
+export type MapPropsToArgs<P extends ModelProviderPropsBase = ModelProviderPropsBase, T extends ModelProviderApiArgs = ModelProviderApiArgs> = (props: P, queryType: LlmQueryType) => Omit<T, 'prompt' | 'messages'>
+
+const mapModelPropsToArgs: MapPropsToArgs<ModelProviderPropsBase, ModelProviderApiArgs> = (props: ModelProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
   return {
     model: props.model,
     stream: props.stream,
@@ -163,7 +165,10 @@ export const doQueryLlm: doQureryLlmFunction = async (
 
     const response = await fetch(apiEndpoint, { 
       method: 'post', 
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
       signal: controller.signal,
       body: JSON.stringify(input)
     })
@@ -186,7 +191,12 @@ export type ChunkDecoder = (chunk: StreamedChunk, responseType: LlmQueryType) =>
 const QueryLlmContext = AI.createContext<{
   queryLlm: QureryLlmFunction,
   chunkDecoder: ChunkDecoder,
-}>({queryLlm: () => { throw 'function queryLlm is not defined' }, chunkDecoder: () => { throw 'function chunkDecoder is not defined' } })
+  mapPropsToArgs: MapPropsToArgs
+}>({
+  queryLlm: () => { throw 'function queryLlm is not defined' }, 
+  chunkDecoder: () => { throw 'function chunkDecoder is not defined' }, 
+  mapPropsToArgs: () => { throw 'function mapPropsToArgs is not defined' } 
+})
 
 const getResponseStreamConsumer = (
   queryType: LlmQueryType,
@@ -266,12 +276,13 @@ export async function* ModelProviderChatModel(
   }
 
   yield AI.AppendOnlyStream;
-  const chatCompletionRequest: ModelProviderApiChatArgs = {
-    ...mapModelPropsToArgs(props),
-    messages,
-  };
 
-  const {queryLlm, chunkDecoder} = getContext(QueryLlmContext)
+  const {queryLlm, chunkDecoder, mapPropsToArgs} = getContext(QueryLlmContext)
+
+  const chatCompletionRequest: ModelProviderApiChatArgs = {
+    messages,
+    ...mapPropsToArgs(props, LLM_QUERY_TYPE.CHAT),
+  };
 
   const chatResponse = await queryLlm(LLM_QUERY_TYPE.CHAT, chatCompletionRequest, logger)
   
@@ -366,18 +377,18 @@ export async function* ModelProviderCompletionModel(
     prompt = { prompt: await render(props.children) }
   }
 
-  const llama2Args: ModelProviderApiCompletionArgs = {
-    ...mapModelPropsToArgs(props),
+  const {queryLlm, chunkDecoder, mapPropsToArgs} = getContext(QueryLlmContext)
+
+  const modelArgs: ModelProviderApiCompletionArgs = {
     ...prompt,
+    ...mapPropsToArgs(props, LLM_QUERY_TYPE.COMPLETION),
   };
 
-  logger.debug({ llama2Args }, 'Calling Ollama');
-
-  const {queryLlm, chunkDecoder} = getContext(QueryLlmContext)
+  logger.debug({ modelArgs }, 'Calling Ollama');
 
   const response = await queryLlm(
-  LLM_QUERY_TYPE.COMPLETION,
-    llama2Args,
+    LLM_QUERY_TYPE.COMPLETION,
+    modelArgs,
     logger
   );
 
@@ -430,9 +441,10 @@ export async function* ModelProviderCompletionModel(
   return AI.AppendOnlyStream;
 }
 
-export interface ModelProviderProps extends ModelProviderPropsBase {
+export interface ModelProviderProps<P extends ModelProviderPropsBase = ModelProviderPropsBase, T extends ModelProviderApiArgs = ModelProviderApiArgs> extends ModelProviderPropsBase {
   queryLlm: QureryLlmFunction,
   chunkDecoder: ChunkDecoder,
+  mapPropsToArgs?: MapPropsToArgs<P, T>,
   chatModel?: ModelComponent<ModelProviderPropsBase>, 
   completionModel?: ModelComponent<ModelProviderPropsBase>
 }
@@ -442,6 +454,7 @@ export function ModelProvider(
     children, 
     queryLlm, 
     chunkDecoder,
+    mapPropsToArgs = mapModelPropsToArgs,
     chatModel = ModelProviderChatModel, 
     completionModel = ModelProviderCompletionModel, 
     ...defaults 
@@ -451,7 +464,7 @@ export function ModelProvider(
   }: AI.RenderContext
 ) {
   return (
-    <QueryLlmContext.Provider value={{queryLlm, chunkDecoder}}>
+    <QueryLlmContext.Provider value={{queryLlm, chunkDecoder, mapPropsToArgs}}>
       <ChatProvider component={chatModel} {...defaults}>
         <CompletionProvider component={completionModel} {...defaults}>
           {children}
