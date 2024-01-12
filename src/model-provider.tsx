@@ -341,7 +341,7 @@ export async function* ModelProviderCompletionModel(
   async function buildPromptFromNodes (children: AI.Node[]) {
       const { textNodes, imageNodes } = children?.reduce((nodes, child) => {
         // @ts-ignore
-        if (child && child.tag && child.tag.name === 'OllamaImage') {
+        if (child && child.tag && child.tag.name === 'LlavaImage') {
           return {
             textNodes: [...nodes.textNodes, `[img-${nodes.imageNodes.length}]`],
             imageNodes: [...nodes.imageNodes, child]
