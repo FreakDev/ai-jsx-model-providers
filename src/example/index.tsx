@@ -1,7 +1,7 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, LlavaImage, Llamafile } from '../index.js'
+import { Ollama, LlavaImage, Llamafile, ReplicateModel } from '../index.js'
 import { TogetherAi } from "../providers/together-ai.js";
 
 function Multimodal () {
@@ -38,6 +38,15 @@ function Together () {
   )
 }
 
+function Replicate () {
+  return (
+    <ReplicateModel 
+      model="mistralai/mistral-7b-instruct-v0.1:5fe0a3d7ac2852264a25279d1dfb798acbc4d49711d126646594e212cb821749" 
+    >
+      Write a little haiku about life 
+    </ReplicateModel>
+  )
+}
 
 function App() {
   return (
@@ -45,6 +54,7 @@ function App() {
       <Multimodal />
       <Chat />
       <Together />
+      <Replicate />
     </>
   )
 }

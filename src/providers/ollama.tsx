@@ -1,4 +1,4 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderPropsBase, ModelProvider, ModelProviderApiArgs, ModelProviderProps, StreamedChunk, doQueryLlm } from "../model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderPropsBase, ModelProvider, ModelProviderApiArgs, ModelProviderProps, StreamedChunk, doQueryLlm } from "../lib/model-provider.js";
 import * as AI from 'ai-jsx';
 
 const AI_JSX_OLLAMA_API_BASE = process.env.AI_JSX_OLLAMA_API_BASE ?? 'http://127.0.0.1:11434/api'

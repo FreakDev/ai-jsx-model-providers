@@ -4,7 +4,7 @@ import { AIJSXError, ErrorCode } from 'ai-jsx/core/errors';
 import * as AI from 'ai-jsx';
 import { debugRepresentation } from 'ai-jsx/core/debug';
 import _ from 'lodash';
-import { streamToAsyncIterator } from './utils/srteamToAsyncIterator.js';
+import { streamToAsyncIterator } from './streamToAsyncIterator.js';
 
 /**
  * Base 64 encoded image

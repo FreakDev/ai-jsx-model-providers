@@ -1,4 +1,4 @@
-import { arrayBufferToBase64 } from '../utils/arrayBufferToBase64.js';
+import { arrayBufferToBase64 } from '../lib/arrayBufferToBase64.js';
 
 interface Props {
   url: string,

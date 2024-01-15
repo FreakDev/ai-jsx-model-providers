@@ -1,4 +1,4 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm } from "../model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm } from "../lib/model-provider.js";
 import * as AI from 'ai-jsx';
 import _ from "lodash";
 
