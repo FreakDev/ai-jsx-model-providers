@@ -28,7 +28,7 @@ interface ModelProviderOptions {
   repeat_penalty?: number;
   temperature?: number;
   seed?: number;
-  stop?: string;
+  stop?: string[];
   tfs_z?: number
   num_predict?: number;
   top_k?: number;

@@ -38,6 +38,10 @@ export const llamafileChunkDecoder = (streamedChunk: StreamedChunk, queryType: L
   }
 }
 
+const mapPropsToArgs = (props: any) => ({
+  ...props
+})
+
 type LlamafileProps = Omit<ModelProviderPropsBase, 'model'> & {
   queryLlm?: ModelProviderProps['queryLlm'],
   chunkDecoder?: ModelProviderProps['chunkDecoder']
@@ -53,6 +57,7 @@ export const Llamafile = (
 ) => {
   return (
   <ModelProvider 
+    mapPropsToArgs={mapPropsToArgs}
     queryLlm={queryLlm ?? queryLlamafile} 
     chunkDecoder={chunkDecoder ?? llamafileChunkDecoder} 
     model="" 
