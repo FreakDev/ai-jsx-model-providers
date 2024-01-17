@@ -1,4 +1,4 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm } from "../lib/model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm, LlmQueryReturnFormat, GenerateEmbedding, LLM_QUERY_RETURN_FORMAT } from "../lib/model-provider.js";
 import * as AI from 'ai-jsx';
 import _ from "lodash";
 
@@ -7,9 +7,16 @@ const AI_JSX_LLAMAFILE_API_BASE = process.env.AI_JSX_LLAMAFILE_API_BASE ?? 'http
 export async function queryLlamafile(
   queryType: LlmQueryType,
   input: any,
-  logger: AI.ComponentContext['logger']
+  logger: AI.ComponentContext['logger'],
+  returnFormat?: LlmQueryReturnFormat
 ) {
-  return doQueryLlm(`${AI_JSX_LLAMAFILE_API_BASE}${queryType === LLM_QUERY_TYPE.CHAT ? '/v1/chat/completions' : '/completion'}`, input, logger)
+  const url = `${AI_JSX_LLAMAFILE_API_BASE}${{
+    [LLM_QUERY_TYPE.CHAT]: '/v1/chat/completions',
+    [LLM_QUERY_TYPE.COMPLETION]: '/completion',
+    [LLM_QUERY_TYPE.EMBEDDING]: '/embedding'
+  }[queryType]}`
+
+  return doQueryLlm(url, input, logger, {}, returnFormat)
 }
 
 export const llamafileChunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryType) => { 
@@ -38,13 +45,30 @@ export const llamafileChunkDecoder = (streamedChunk: StreamedChunk, queryType: L
   }
 }
 
-const mapPropsToArgs = (props: any) => ({
-  ...props
-})
+const mapPropsToArgs = (props: any, queryType: LlmQueryType) => {
+  if (queryType === LLM_QUERY_TYPE.EMBEDDING) {
+    return {
+      content: props.children
+    }
+  } else {
+    return {
+      ...props
+    }
+  }
+}
+
+const getEmbeddingGenerator = (logger: AI.ComponentContext['logger']): GenerateEmbedding => async (input) => {
+  const embeddingQueryResponse = await queryLlamafile(LLM_QUERY_TYPE.EMBEDDING, {
+      content: input
+    }, logger, LLM_QUERY_RETURN_FORMAT.JSON) as any
+  
+    return embeddingQueryResponse.embedding
+  }
 
 type LlamafileProps = Omit<ModelProviderPropsBase, 'model'> & {
   queryLlm?: ModelProviderProps['queryLlm'],
   chunkDecoder?: ModelProviderProps['chunkDecoder']
+  generateEmbedding?: GenerateEmbedding;
 }
 
 export const Llamafile = (
@@ -52,14 +76,17 @@ export const Llamafile = (
     children, 
     queryLlm,
     chunkDecoder,
+    generateEmbedding,
     ...defaults 
-  }: LlamafileProps
+  }: LlamafileProps,
+  { logger }: AI.ComponentContext
 ) => {
   return (
   <ModelProvider 
     mapPropsToArgs={mapPropsToArgs}
     queryLlm={queryLlm ?? queryLlamafile} 
     chunkDecoder={chunkDecoder ?? llamafileChunkDecoder} 
+    generateEmbedding={generateEmbedding ?? getEmbeddingGenerator(logger)}
     model="" 
     {...defaults}
   >

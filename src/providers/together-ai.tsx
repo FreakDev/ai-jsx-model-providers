@@ -1,4 +1,4 @@
-import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm, MapPropsToArgs } from "../lib/model-provider.js";
+import { LLM_QUERY_TYPE, LlmQueryType, ModelProviderProps, ModelProvider, ModelProviderApiArgs, StreamedChunk, ModelProviderPropsBase, doQueryLlm, MapPropsToArgs, LlmQueryReturnFormat, GenerateEmbedding, LLM_QUERY_RETURN_FORMAT } from "../lib/model-provider.js";
 import * as AI from 'ai-jsx';
 import _ from "lodash";
 
@@ -7,13 +7,18 @@ const AI_JSX_TOGETHERAI_API_BASE = 'https://api.together.xyz'
 export async function queryTogetherAi(
   queryType: LlmQueryType,
   input: any,
-  logger: AI.ComponentContext['logger']
+  logger: AI.ComponentContext['logger'], 
+  returnFormat?: LlmQueryReturnFormat
 ) {
-  const url = `${AI_JSX_TOGETHERAI_API_BASE}${queryType === LLM_QUERY_TYPE.CHAT ? '/v1/chat/completions' : '/api/inference'}`
+  const url = `${AI_JSX_TOGETHERAI_API_BASE}${{
+    [LLM_QUERY_TYPE.CHAT]: '/v1/chat/completions',
+    [LLM_QUERY_TYPE.COMPLETION]: '/api/inference',
+    [LLM_QUERY_TYPE.EMBEDDING]: '/v1/embeddings'
+  }[queryType]}`
 
   return doQueryLlm(url, input, logger, {
     'Authorization': `Bearer ${process.env.AI_JSX_TOGETHERAI_API_KEY}`
-  })
+  }, returnFormat)
 }
 
 export const togetherAiChunkDecoder = (streamedChunk: StreamedChunk, queryType: LlmQueryType) => { 
@@ -52,20 +57,33 @@ export const togetherAiChunkDecoder = (streamedChunk: StreamedChunk, queryType: 
   }
 }
 
-const togetherAiMapPropsToArgs: MapPropsToArgs = (props: TogetherAiProps) => {
-  const togetherInput: any = {
-    ...props,
-    model: props.model,
-    prompt_format_string: props.promptFormatString ?? '[INST]  {prompt}\n [/INST]',
-    "stream_tokens": props.stream ?? false,
+const togetherAiMapPropsToArgs: MapPropsToArgs = (props: TogetherAiProps, queryType: LlmQueryType) => {
+  if (queryType === LLM_QUERY_TYPE.EMBEDDING) {
+    return {
+      model: props.model,
+      input: props.children
+    }
+  } else {
+    return {
+      ...props,
+      "stream_tokens": props.stream ?? false,
+    }
   }
-
-  return togetherInput;
 }
+
+const getEmbeddingGenerator = (model: string, logger: AI.ComponentContext['logger']): GenerateEmbedding => async (input) => {
+  const embeddingQueryResponse = await queryTogetherAi(LLM_QUERY_TYPE.EMBEDDING, {
+      model,
+      input
+    }, logger, LLM_QUERY_RETURN_FORMAT.JSON) as any
+  
+    return embeddingQueryResponse.data[0].embedding
+  }
 
 interface TogetherAiProps extends ModelProviderPropsBase {
   queryLlm?: ModelProviderProps['queryLlm'],
   chunkDecoder?: ModelProviderProps['chunkDecoder'],
+  generateEmbedding?: GenerateEmbedding;
   promptFormatString?: string,
 }
 
@@ -75,14 +93,17 @@ export const TogetherAi = (
     model,
     queryLlm,
     chunkDecoder,
+    generateEmbedding,
     ...defaults 
-  }: TogetherAiProps
+  }: TogetherAiProps,
+  { logger }: AI.ComponentContext
 ) => {
   return (
   <ModelProvider 
     queryLlm={queryLlm ?? queryTogetherAi} 
     chunkDecoder={chunkDecoder ?? togetherAiChunkDecoder} 
     mapPropsToArgs={togetherAiMapPropsToArgs}
+    generateEmbedding={generateEmbedding ?? getEmbeddingGenerator(model, logger)}
     model={model}
     {...defaults}
   >

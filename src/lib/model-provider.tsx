@@ -106,14 +106,15 @@ export type ModelProviderPropsBase = ModelPropsWithChildren
 
 export const LLM_QUERY_TYPE = {
   CHAT: 'chat',
-  COMPLETION: 'completion'
+  COMPLETION: 'completion',
+  EMBEDDING: 'embedding'
 } as const
 
 export type LlmQueryType = typeof LLM_QUERY_TYPE[keyof typeof LLM_QUERY_TYPE]
 
 export type MapPropsToArgs<P extends ModelProviderPropsBase = ModelProviderPropsBase, T extends ModelProviderApiArgs = ModelProviderApiArgs> = (props: P, queryType: LlmQueryType) => Omit<T, 'prompt' | 'messages'>
 
-const mapModelPropsToArgs: MapPropsToArgs<ModelProviderPropsBase, ModelProviderApiArgs> = (props: ModelProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
+export const mapModelPropsToArgs: MapPropsToArgs<ModelProviderPropsBase, ModelProviderApiArgs> = (props: ModelProviderPropsBase): Omit<ModelProviderApiArgs, 'prompt' | 'messages'> => {
   return {
     model: props.model,
     stream: props.stream,
@@ -141,21 +142,31 @@ const mapModelPropsToArgs: MapPropsToArgs<ModelProviderPropsBase, ModelProviderA
 export type QureryLlmFunction = (
   queryType: LlmQueryType,
   input: any,
-  logger: AI.ComponentContext['logger']
-) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
+  logger: AI.ComponentContext['logger'],
+  returnFormat?: LlmQueryReturnFormat
+) => ReturnType<doQureryLlmFunction>
+
+export const LLM_QUERY_RETURN_FORMAT = {
+  STREAM: 'stream',
+  JSON: 'json'
+}
+
+export type LlmQueryReturnFormat = typeof LLM_QUERY_RETURN_FORMAT[keyof typeof LLM_QUERY_RETURN_FORMAT]
 
 type doQureryLlmFunction = (
   url: string,
   input: any,
   logger: AI.ComponentContext['logger'],
-  extraHeaders?: Record<string, string>
-) => Promise<ReturnType<typeof streamToAsyncIterator> | undefined>
+  extraHeaders?: Record<string, string>,
+  returnFormat?: LlmQueryReturnFormat
+) => Promise<ReturnType<typeof streamToAsyncIterator> | unknown | undefined>
 
 export const doQueryLlm: doQureryLlmFunction = async (
   url,
   input,
   logger,
-  headers = {}
+  headers = {}, 
+  returnFormat = LLM_QUERY_RETURN_FORMAT.STREAM
 ) => {
   logger.debug(input, 'Calling model');
 
@@ -177,7 +188,11 @@ export const doQueryLlm: doQureryLlmFunction = async (
       throw await response.text()
     }
 
-    return streamToAsyncIterator(response.body);
+    if (returnFormat === LLM_QUERY_RETURN_FORMAT.STREAM) {
+      return streamToAsyncIterator(response.body);
+    } else if (returnFormat === LLM_QUERY_RETURN_FORMAT.JSON) {
+      return response.json()
+    }
 
   } catch (ex) {
     controller.abort()
@@ -187,15 +202,20 @@ export const doQueryLlm: doQureryLlmFunction = async (
 
 export type StreamedChunk = ArrayBuffer | string
 export type ChunkDecoder = (chunk: StreamedChunk, responseType: LlmQueryType) => string;
+export type GenerateEmbedding = (input: any) => Promise<number[]>
 
-const QueryLlmContext = AI.createContext<{
+export const QueryLlmContext = AI.createContext<{
+  defaultModel: string,
   queryLlm: QureryLlmFunction,
   chunkDecoder: ChunkDecoder,
   mapPropsToArgs: MapPropsToArgs
+  generateEmbedding: GenerateEmbedding
 }>({
+  defaultModel: '',
   queryLlm: () => { throw 'function queryLlm is not defined' }, 
   chunkDecoder: () => { throw 'function chunkDecoder is not defined' }, 
-  mapPropsToArgs: () => { throw 'function mapPropsToArgs is not defined' } 
+  mapPropsToArgs: () => { throw 'function mapPropsToArgs is not defined' } ,
+  generateEmbedding: () => { throw 'function generateEmbedding is not defined' } 
 })
 
 const getResponseStreamConsumer = (
@@ -284,7 +304,7 @@ export async function* ModelProviderChatModel(
     ...mapPropsToArgs(props, LLM_QUERY_TYPE.CHAT),
   };
 
-  const chatResponse = await queryLlm(LLM_QUERY_TYPE.CHAT, chatCompletionRequest, logger)
+  const chatResponse = (await queryLlm(LLM_QUERY_TYPE.CHAT, chatCompletionRequest, logger)) as ReturnType<typeof streamToAsyncIterator>
   
   const outputMessages = [] as AI.Node[];
 
@@ -386,11 +406,11 @@ export async function* ModelProviderCompletionModel(
 
   logger.debug({ modelArgs }, 'Calling Ollama');
 
-  const response = await queryLlm(
+  const response = (await queryLlm(
     LLM_QUERY_TYPE.COMPLETION,
     modelArgs,
     logger
-  );
+  )) as ReturnType<typeof streamToAsyncIterator>;
 
   if (response) {
     const iterator = response[Symbol.asyncIterator]()
@@ -447,6 +467,7 @@ export interface ModelProviderProps<P extends ModelProviderPropsBase = ModelProv
   mapPropsToArgs?: MapPropsToArgs<P, T>,
   chatModel?: ModelComponent<ModelProviderPropsBase>, 
   completionModel?: ModelComponent<ModelProviderPropsBase>
+  generateEmbedding?: GenerateEmbedding
 }
 
 export function ModelProvider(
@@ -457,14 +478,12 @@ export function ModelProvider(
     mapPropsToArgs = mapModelPropsToArgs,
     chatModel = ModelProviderChatModel, 
     completionModel = ModelProviderCompletionModel, 
+    generateEmbedding = async () => [],
     ...defaults 
-  }: ModelProviderProps, 
-  {
-    getContext
-  }: AI.RenderContext
+  }: ModelProviderProps
 ) {
   return (
-    <QueryLlmContext.Provider value={{queryLlm, chunkDecoder, mapPropsToArgs}}>
+    <QueryLlmContext.Provider value={{ defaultModel: defaults.model, queryLlm, chunkDecoder, mapPropsToArgs, generateEmbedding}}>
       <ChatProvider component={chatModel} {...defaults}>
         <CompletionProvider component={completionModel} {...defaults}>
           {children}

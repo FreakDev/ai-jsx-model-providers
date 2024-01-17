@@ -1,7 +1,7 @@
 import * as AI from "ai-jsx";
 import { ChatCompletion, Completion, UserMessage} from "ai-jsx/core/completion";
 
-import { Ollama, LlavaImage, Llamafile, ReplicateModel } from '../index.js'
+import { Ollama, LlavaImage, Llamafile, ReplicateModel, QueryLlmContext } from '../index.js'
 import { TogetherAi } from "../providers/together-ai.js";
 
 function Multimodal () {
@@ -48,6 +48,20 @@ function Replicate () {
   )
 }
 
+function EmbeddingDemo () { 
+  // embedding is implemented for Ollama, Llamafile, and TogetherAi
+
+  const Embedding = async (_props: any, {getContext}: AI.ComponentContext) => {
+    const { generateEmbedding } = getContext(QueryLlmContext);
+
+    return JSON.stringify(await generateEmbedding('Hello World'))
+  }
+
+  return <Ollama model="llava">
+    <Embedding />
+  </Ollama>
+}
+
 function App() {
   return (
     <>
@@ -55,6 +69,7 @@ function App() {
       <Chat />
       <Together />
       <Replicate />
+      <EmbeddingDemo />
     </>
   )
 }
